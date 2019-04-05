@@ -3,11 +3,21 @@ from __future__ import absolute_import, unicode_literals, print_function, divisi
 
 from flask import current_app, safe_join
 from werkzeug.exceptions import NotFound
-from pygit2 import Repository, GIT_OBJ_COMMIT, GIT_OBJ_BLOB, GIT_OBJ_TREE, GIT_OBJ_TAG
+from pygit2 import Repository, GIT_OBJ_COMMIT, GIT_OBJ_BLOB, GIT_OBJ_TREE, GIT_OBJ_TAG, clone_repository
+import os
+
+
+def handle_repo_not_found(repo_key):
+    if '__' not in repo_key or '.wiki' not in repo_key:
+        return
+    url = 'https://github.com/' + repo_key.replace('__', '/') + '.git'
+    clone_repository(url, safe_join(current_app.config['RESTFULGIT_REPO_BASE_PATH'], repo_key))
 
 
 def get_repo(repo_key):
     path = safe_join(current_app.config['RESTFULGIT_REPO_BASE_PATH'], repo_key)
+    if not os.path.exists(path):
+        handle_repo_not_found(repo_key)
     try:
         return Repository(path)
     except KeyError:
